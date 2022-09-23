@@ -389,6 +389,8 @@ VkSampler ObjectCache::GetSampler(const SamplerState& info)
 VkRenderPass ObjectCache::GetRenderPass(VkFormat color_format, VkFormat depth_format,
                                         u32 multisamples, VkAttachmentLoadOp load_op)
 {
+  std::scoped_lock lock(m_render_pass_mutex);
+
   auto key = std::tie(color_format, depth_format, multisamples, load_op);
   auto it = m_render_pass_cache.find(key);
   if (it != m_render_pass_cache.end())
@@ -467,6 +469,8 @@ VkRenderPass ObjectCache::GetRenderPass(VkFormat color_format, VkFormat depth_fo
 
 void ObjectCache::DestroyRenderPassCache()
 {
+  std::scoped_lock lock(m_render_pass_mutex);
+
   for (auto& it : m_render_pass_cache)
     vkDestroyRenderPass(g_vulkan_context->GetDevice(), it.second, nullptr);
   m_render_pass_cache.clear();

@@ -22,6 +22,8 @@
 
 namespace Vulkan
 {
+class StateTracker;
+
 class CommandBufferManager
 {
 public:
@@ -50,26 +52,19 @@ public:
   // If the last completed fence counter is greater or equal to N, it means that the work
   // associated counter N has been completed by the GPU. The value of N to associate with
   // commands can be retreived by calling GetCurrentFenceCounter().
+  // THREAD SAFE
   u64 GetCompletedFenceCounter() const
   {
     return m_completed_fence_counter.load(std::memory_order_acquire);
   }
 
-  // Gets the fence that will be signaled when the currently executing command buffer is
-  // queued and executed. Do not wait for this fence before the buffer is executed.
-  u64 GetCurrentFenceCounter() const
-  {
-    auto& resources = m_command_buffers[m_current_cmd_buffer];
-    return resources.fence_counter;
-  }
-
   // Returns the semaphore for the current command buffer, which can be used to ensure the
   // swap chain image is ready before the command buffer executes.
-  VkSemaphore GetCurrentCommandBufferSemaphore()
+  void SetWaitSemaphoreForCurrentCommandBuffer(VkSemaphore semaphore)
   {
     auto& resources = m_command_buffers[m_current_cmd_buffer];
     resources.semaphore_used = true;
-    return resources.semaphore;
+    resources.semaphore = semaphore;
   }
 
   // Ensure that the worker thread has submitted any previous command buffers and is idle.
@@ -77,15 +72,17 @@ public:
 
   // Wait for a fence to be completed.
   // Also invokes callbacks for completion.
+  // THREAD SAFE
   void WaitForFenceCounter(u64 fence_counter);
 
-  void SubmitCommandBuffer(bool submit_on_worker_thread, bool wait_for_completion,
+  void SubmitCommandBuffer(u64 fence_counter, bool submit_on_worker_thread,
+                           bool wait_for_completion,
                            VkSwapchainKHR present_swap_chain = VK_NULL_HANDLE,
                            uint32_t present_image_index = 0xFFFFFFFF);
 
   // Was the last present submitted to the queue a failure? If so, we must recreate our swapchain.
   bool CheckLastPresentFail() { return m_last_present_failed.TestAndClear(); }
-  VkResult GetLastPresentResult() const { return m_last_present_result; }
+  VkResult GetLastPresentResult() const { return m_last_present_result.load(); }
   bool CheckLastPresentDone() { return m_last_present_done.TestAndClear(); }
 
   // Schedule a vulkan resource for destruction later on. This will occur when the command buffer
@@ -95,6 +92,8 @@ public:
   void DeferFramebufferDestruction(VkFramebuffer object);
   void DeferImageDestruction(VkImage object, VmaAllocation alloc);
   void DeferImageViewDestruction(VkImageView object);
+
+  StateTracker* GetStateTracker() { return m_state_tracker.get(); }
 
 private:
   bool CreateCommandBuffers();
@@ -141,13 +140,14 @@ private:
     return m_command_buffers[m_current_cmd_buffer];
   }
 
-  u64 m_next_fence_counter = 1;
   std::atomic<u64> m_completed_fence_counter = 0;
 
   std::array<FrameResources, NUM_FRAMES_IN_FLIGHT> m_frame_resources;
   std::array<CmdBufferResources, NUM_COMMAND_BUFFERS> m_command_buffers;
   u32 m_current_frame = 0;
   u32 m_current_cmd_buffer = 0;
+
+  std::unique_ptr<StateTracker> m_state_tracker;
 
   // Threaded command buffer execution
   std::thread m_submit_thread;
@@ -165,7 +165,7 @@ private:
   bool m_submit_worker_idle = true;
   Common::Flag m_last_present_failed;
   Common::Flag m_last_present_done;
-  VkResult m_last_present_result = VK_SUCCESS;
+  std::atomic<VkResult> m_last_present_result = VK_SUCCESS;
   u32 m_descriptor_set_count = DESCRIPTOR_SETS_PER_POOL;
 
   // Fence thread
@@ -180,7 +180,5 @@ private:
   std::mutex m_pending_fences_lock;
   std::condition_variable m_fence_condvar;
 };
-
-extern std::unique_ptr<CommandBufferManager> g_command_buffer_mgr;
 
 }  // namespace Vulkan

@@ -13,28 +13,24 @@
 
 namespace Vulkan
 {
-class VKFramebuffer;
 class VKShader;
 class VKPipeline;
-class VKTexture;
-class StreamBuffer;
-class VertexFormat;
+class CommandBufferManager;
 
 class StateTracker
 {
 public:
-  StateTracker();
+  StateTracker(CommandBufferManager* command_buffer_mgr);
   ~StateTracker();
 
-  static StateTracker* GetInstance();
-  static bool CreateInstance();
-  static void DestroyInstance();
+  bool Initialize();
 
-  VKFramebuffer* GetFramebuffer() const { return m_framebuffer; }
   const VKPipeline* GetPipeline() const { return m_pipeline; }
   void SetVertexBuffer(VkBuffer buffer, VkDeviceSize offset, u32 size);
   void SetIndexBuffer(VkBuffer buffer, VkDeviceSize offset, VkIndexType type);
-  void SetFramebuffer(VKFramebuffer* framebuffer);
+  void SetFramebuffer(VkFramebuffer framebuffer, VkRect2D render_area,
+                      VkRenderPass load_render_pass, VkRenderPass clear_render_pass,
+                      VkRenderPass discard_render_pass);
   void SetPipeline(const VKPipeline* pipeline);
   void SetComputeShader(const VKShader* shader);
   void SetGXUniformBuffer(u32 index, VkBuffer buffer, u32 offset, u32 size);
@@ -110,8 +106,6 @@ private:
                                  DIRTY_FLAG_UTILITY_BINDINGS | DIRTY_FLAG_COMPUTE_BINDINGS
   };
 
-  bool Initialize();
-
   // Check that the specified viewport is within the render area.
   // If not, ends the render pass if it is a clear render pass.
   bool IsViewportWithinRenderArea() const;
@@ -120,6 +114,8 @@ private:
   void UpdateGXDescriptorSet();
   void UpdateUtilityDescriptorSet();
   void UpdateComputeDescriptorSet();
+
+  CommandBufferManager* m_command_buffer_mgr;
 
   // Which bindings/state has to be updated before the next draw.
   u32 m_dirty_flags = 0;
@@ -157,10 +153,17 @@ private:
   VkRect2D m_scissor = {{0, 0}, {1, 1}};
 
   // uniform buffers
-  std::unique_ptr<VKTexture> m_dummy_texture;
+  VkImage m_dummy_image;
+  VkImageView m_dummy_view;
+  VmaAllocation m_dummy_alloc;
 
-  VKFramebuffer* m_framebuffer = nullptr;
-  VkRenderPass m_current_render_pass = VK_NULL_HANDLE;
+  VkFramebuffer m_framebuffer = VK_NULL_HANDLE;
   VkRect2D m_framebuffer_render_area = {};
+  VkRenderPass m_framebuffer_load_render_pass = VK_NULL_HANDLE;
+  VkRenderPass m_framebuffer_discard_render_pass = VK_NULL_HANDLE;
+  VkRenderPass m_framebuffer_clear_render_pass = VK_NULL_HANDLE;
+
+  VkRenderPass m_current_render_pass = VK_NULL_HANDLE;
+  VkRect2D m_render_area = {};
 };
 }  // namespace Vulkan
