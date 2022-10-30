@@ -382,7 +382,7 @@ void GLContextEGL::QueryDimensions()
   if (!eglQuerySurface(m_egl_display, m_egl_surface, EGL_WIDTH, &surface_width) ||
       !eglQuerySurface(m_egl_display, m_egl_surface, EGL_HEIGHT, &surface_height))
   {
-    WARN_LOG(VIDEO, "Failed to get surface dimensions via eglQuerySurface. Size may be incorrect.");
+    INFO_LOG_FMT(VIDEO, "Failed to get surface dimensions via eglQuerySurface. Size may be incorrect.");
   }
   m_backbuffer_width = static_cast<u32>(surface_width);
   m_backbuffer_height = static_cast<u32>(surface_height);
