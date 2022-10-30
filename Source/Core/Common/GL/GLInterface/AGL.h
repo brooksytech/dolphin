@@ -27,6 +27,8 @@ public:
 
   bool MakeCurrent() override;
   bool ClearCurrent() override;
+  
+  void UpdateDimensions(int window_width, int window_height) override;
 
   void Update() override;
 
