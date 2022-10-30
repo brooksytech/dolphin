@@ -13,8 +13,6 @@ class GLContextEGLX11 final : public GLContextEGL
 public:
   ~GLContextEGLX11() override;
 
-  void Update() override;
-
 void UpdateDimensions(int window_width, int window_height) override;
 
 protected:
