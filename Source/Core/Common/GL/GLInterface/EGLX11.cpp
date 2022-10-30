@@ -11,6 +11,8 @@ GLContextEGLX11::~GLContextEGLX11()
   m_render_window.reset();
 }
 
+void GLContextEGLX11::UpdateDimensions(int window_width, int window_height)
+
 void GLContextEGLX11::Update()
 {
   m_render_window->UpdateDimensions();
