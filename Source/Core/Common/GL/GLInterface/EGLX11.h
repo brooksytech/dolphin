@@ -15,6 +15,8 @@ public:
 
   void Update() override;
 
+void UpdateDimensions(int window_width, int window_height) override;
+
 protected:
   EGLDisplay OpenEGLDisplay() override;
   EGLNativeWindowType GetEGLNativeWindow(EGLConfig config) override;
