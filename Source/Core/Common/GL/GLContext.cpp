@@ -60,7 +60,7 @@ bool GLContext::ClearCurrent()
   return false;
 }
 
-void GLContext::Update()
+void GLContext::UpdateDimensions(int window_width, int window_height)
 {
 }
 
@@ -115,6 +115,10 @@ std::unique_ptr<GLContext> GLContext::Create(const WindowSystemInfo& wsi, bool s
     context = std::make_unique<GLContextGLX>();
 #endif
   }
+#endif
+#if HAVE_WAYLAND
+  if (wsi.type == WindowSystemType::Wayland)
+    context = std::make_unique<GLContextEGLWayland>();
 #endif
 #if HAVE_EGL
   if (wsi.type == WindowSystemType::Headless || wsi.type == WindowSystemType::FBDev)
