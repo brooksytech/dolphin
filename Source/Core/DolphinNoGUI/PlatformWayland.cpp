@@ -131,8 +131,8 @@ void PlatformWayland::TopLevelConfigure(void* data, struct xdg_toplevel* xdg_top
   platform->m_surface_height = height;
   if (g_renderer)
     g_renderer->ResizeSurface(width, height);
-  if (g_controller_interface.IsInit())
-    g_controller_interface.OnWindowResized(width, height);
+  //if (g_controller_interface.IsInit())
+    //g_controller_interface.OnWindowResized(width, height);
 }
 
 void PlatformWayland::TopLevelClose(void* data, struct xdg_toplevel* xdg_toplevel)
@@ -146,7 +146,7 @@ bool PlatformWayland::Init()
   m_display = wl_display_connect(nullptr);
   if (!m_display)
   {
-    PanicAlert("Failed to connect to Wayland display.");
+    //PanicAlert("Failed to connect to Wayland display.");
     return false;
   }
 
