@@ -272,8 +272,8 @@ void PlatformX11::ProcessEvents()
         UpdateWindowPosition();
         g_renderer->ResizeSurface(m_window_width, m_window_height);
       }
-      if (g_controller_interface.IsInit())
-        g_controller_interface.OnWindowResized(m_window_width, m_window_height);
+      //if (g_controller_interface.IsInit())
+        //g_controller_interface.OnWindowResized(m_window_width, m_window_height);
     }
     break;
     }
