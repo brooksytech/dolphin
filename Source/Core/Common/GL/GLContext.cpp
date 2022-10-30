@@ -25,6 +25,9 @@
 #if defined(ANDROID)
 #include "Common/GL/GLInterface/EGLAndroid.h"
 #endif
+#if HAVE_WAYLAND
+#include "Common/GL/GLInterface/EGLWayland.h"
+#endif
 #endif
 
 const std::array<std::pair<int, int>, 9> GLContext::s_desktop_opengl_versions = {
