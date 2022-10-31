@@ -59,17 +59,17 @@ SWRenderer::CreateFramebuffer(AbstractTexture* color_attachment, AbstractTexture
                                static_cast<SWTexture*>(depth_attachment));
 }
 
-void SWRenderer::BindBackbuffer(const ClearColor& clear_color)
-{
+//void SWRenderer::BindBackbuffer(const ClearColor& clear_color)
+//{
   // Look for framebuffer resizes
-  if (!m_surface_resized.TestAndClear())
-    return;
+  //if (!m_surface_resized.TestAndClear())
+    //return;
 
-  GLContext* context = m_window->GetContext();
-  context->UpdateDimensions(window_width, window_height);
-  m_backbuffer_width = context->GetBackBufferWidth();
-  m_backbuffer_height = context->GetBackBufferHeight();
-}
+  //GLContext* context = m_window->GetContext();
+  //context->UpdateDimensions(window_width, window_height);
+  //m_backbuffer_width = context->GetBackBufferWidth();
+  //m_backbuffer_height = context->GetBackBufferHeight();
+//}
 
 class SWShader final : public AbstractShader
 {
