@@ -108,6 +108,11 @@ std::unique_ptr<AbstractPipeline> SWRenderer::CreatePipeline(const AbstractPipel
   return std::make_unique<SWPipeline>();
 }
 
+void SWRenderer::BindBackbuffer(const ClearColor& clear_color)
+{
+  CheckForSurfaceResize();
+}  
+  
 // Called on the GPU thread
 void SWRenderer::RenderXFBToScreen(const MathUtil::Rectangle<int>& target_rc,
                                    const AbstractTexture* source_texture,
@@ -117,6 +122,16 @@ void SWRenderer::RenderXFBToScreen(const MathUtil::Rectangle<int>& target_rc,
     m_window->ShowImage(source_texture, source_rc);
 }
 
+void SWRenderer::CheckForSurfaceResize()
+{
+  if (!m_surface_resized.TestAndClear())
+    return;
+
+  m_window->UpdateDimensions(m_new_surface_width, m_new_surface_height);
+  m_backbuffer_width = static_cast<int>(m_window->GetWidth());
+  m_backbuffer_height = static_cast<int>(m_window->GetHeight());
+}  
+  
 u32 SWRenderer::AccessEFB(EFBAccessType type, u32 x, u32 y, u32 InputData)
 {
   u32 value = 0;
