@@ -24,6 +24,7 @@ static const u16 button_bitmasks[] = {
     PAD_BUTTON_X,
     PAD_BUTTON_Y,
     PAD_TRIGGER_Z,
+    PAD_BUTTON_HOTKEY,
     PAD_BUTTON_START,
     0  // MIC HAX
 };
@@ -47,6 +48,9 @@ GCPad::GCPad(const unsigned int index) : m_index(index)
   // i18n: The START/PAUSE button on GameCube controllers
   m_buttons->AddInput(ControllerEmu::Translate, START_BUTTON, _trans("START"));
 
+  // Hotkey Button
+  m_buttons->AddInput(ControllerEmu::Translate, HOTKEY_BUTTON, _trans("HOTKEY"));
+  
   // sticks
   groups.emplace_back(m_main_stick = new ControllerEmu::OctagonAnalogStick(
                           MAIN_STICK_GROUP, _trans("Control Stick"), MAIN_STICK_GATE_RADIUS));
