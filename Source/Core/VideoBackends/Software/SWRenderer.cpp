@@ -66,7 +66,7 @@ void SWRenderer::BindBackbuffer(const ClearColor& clear_color)
     return;
 
   GLContext* context = m_window->GetContext();
-  context->Update();
+  context->UpdateDimensions(window_width, window_height);
   m_backbuffer_width = context->GetBackBufferWidth();
   m_backbuffer_height = context->GetBackBufferHeight();
 }
@@ -107,11 +107,6 @@ std::unique_ptr<AbstractPipeline> SWRenderer::CreatePipeline(const AbstractPipel
 {
   return std::make_unique<SWPipeline>();
 }
-
-void SWRenderer::BindBackbuffer(const ClearColor& clear_color)
-{
-  CheckForSurfaceResize();
-}  
   
 // Called on the GPU thread
 void SWRenderer::RenderXFBToScreen(const MathUtil::Rectangle<int>& target_rc,
