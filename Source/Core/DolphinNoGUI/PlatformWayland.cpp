@@ -10,7 +10,12 @@
 #include "Core/Config/MainSettings.h"
 #include "Core/Core.h"
 #include "Core/State.h"
-#include "InputCommon/ControllerInterface/ControllerInterface.h"
+
+#include "Core/HW/GCPad.h"
+#include "InputCommon/GCPadStatus.h"
+#include <fmt/format.h>
+#include "Core/Config/GraphicsSettings.h"
+#include "VideoCommon/VideoConfig.h"
 
 #include <climits>
 #include <cstdio>
@@ -219,9 +224,76 @@ void PlatformWayland::MainLoop()
 {
   while (IsRunning())
   {
+    static int hotkey = 0;
+    static int slot = 0;
+    static int fps = 0;
+    static int aspect = 0;
+	
     UpdateRunningFlag();
     Core::HostDispatchJobs();
     ProcessEvents();
+
+    if(Pad::IsInitialized()) {
+      GCPadStatus x = Pad::GetStatus(0);
+
+      if( (x.button & PAD_BUTTON_HOTKEY) == PAD_BUTTON_HOTKEY) { // hotkey pressed
+       if(hotkey == 1) {
+         hotkey = 2;
+       }
+      } else {
+       hotkey = 1; // assure hotkey is released between actions
+      }
+
+      if(hotkey == 2) { // hotkey pressed
+       if( (x.button & PAD_BUTTON_START) == PAD_BUTTON_START) {
+         RequestShutdown();
+         hotkey = 0;
+       }
+
+       if( (x.button & PAD_TRIGGER_L) == PAD_TRIGGER_L) {
+         State::Load(slot);
+         hotkey = 0;
+       }
+       if( (x.button & PAD_TRIGGER_R) == PAD_TRIGGER_R) {
+         State::Save(slot);
+         hotkey = 0;
+       }
+       if( (x.button & PAD_BUTTON_DOWN) == PAD_BUTTON_DOWN) {
+         if(slot > 0) slot--;
+         Core::DisplayMessage(fmt::format("Slot {} selected", slot), 4000);
+         hotkey = 0;
+       }
+       if( (x.button & PAD_BUTTON_UP) == PAD_BUTTON_UP) {
+         if(slot < 10) slot++;
+         Core::DisplayMessage(fmt::format("Slot {} selected", slot), 4000);
+         hotkey = 0;
+       }
+       if( (x.button & PAD_BUTTON_A) == PAD_BUTTON_A) {
+         Core::SaveScreenShot();
+         hotkey = 0;
+       }
+       if( (x.button & PAD_BUTTON_Y) == PAD_BUTTON_Y) {
+         if(fps == 0) {
+           Config::SetCurrent(Config::GFX_SHOW_FPS, True);
+           fps = 1;
+         } else {
+           Config::SetCurrent(Config::GFX_SHOW_FPS, False);
+           fps = 0;
+         }
+         hotkey = 0;
+       }
+       if( (x.button & PAD_BUTTON_X) == PAD_BUTTON_X) {
+         if(aspect == 0) {
+           Config::SetCurrent(Config::GFX_ASPECT_RATIO, AspectMode::Stretch);
+           aspect = 1;
+         } else {
+           Config::SetCurrent(Config::GFX_ASPECT_RATIO, AspectMode::Auto);
+           aspect = 0;
+         }
+         hotkey = 0;
+       }
+    }
+    }
 
     // TODO: Is this sleep appropriate?
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
