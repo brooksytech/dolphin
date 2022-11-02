@@ -14,20 +14,16 @@
 
 namespace Vulkan
 {
-CommandBufferManager::CommandBufferManager(bool use_threaded_submission)
-    : m_use_threaded_submission(use_threaded_submission)
+CommandBufferManager::CommandBufferManager()
 {
 }
 
 CommandBufferManager::~CommandBufferManager()
 {
   // If the worker thread is enabled, stop and block until it exits.
-  if (m_use_threaded_submission)
-  {
-    WaitForWorkerThreadIdle();
-    m_submit_loop->Stop();
-    m_submit_thread.join();
-  }
+  WaitForWorkerThreadIdle();
+  m_submit_loop->Stop();
+  m_submit_thread.join();
 
   DestroyCommandBuffers();
 }
@@ -37,7 +33,7 @@ bool CommandBufferManager::Initialize()
   if (!CreateCommandBuffers())
     return false;
 
-  if (m_use_threaded_submission && !CreateSubmitThread())
+  if (!CreateSubmitThread())
     return false;
 
   return true;
@@ -258,9 +254,6 @@ bool CommandBufferManager::CreateSubmitThread()
 
 void CommandBufferManager::WaitForWorkerThreadIdle()
 {
-  if (!m_use_threaded_submission)
-    return;
-
   std::unique_lock lock{m_pending_submit_lock};
   m_submit_worker_condvar.wait(lock, [&] { return m_submit_worker_idle; });
 }
@@ -344,7 +337,7 @@ void CommandBufferManager::SubmitCommandBuffer(bool submit_on_worker_thread,
   }
 
   // Submitting off-thread?
-  if (m_use_threaded_submission && submit_on_worker_thread && !wait_for_completion)
+  if (submit_on_worker_thread && !wait_for_completion)
   {
     resources.waiting_for_submit.store(true, std::memory_order_relaxed);
     // Push to the pending submit queue.
