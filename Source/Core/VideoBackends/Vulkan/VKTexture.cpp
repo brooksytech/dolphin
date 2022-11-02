@@ -961,17 +961,8 @@ void VKStagingTexture::Flush()
   if (!m_needs_flush)
     return;
 
-  // Is this copy in the current command buffer?
-  if (g_command_buffer_mgr->GetCurrentFenceCounter() == m_flush_fence_counter)
-  {
-    // Execute the command buffer and wait for it to finish.
-    Renderer::GetInstance()->ExecuteCommandBuffer(false, true);
-  }
-  else
-  {
-    // Wait for the GPU to finish with it.
-    g_command_buffer_mgr->WaitForFenceCounter(m_flush_fence_counter);
-  }
+  // Wait for the GPU to finish with it.
+  g_command_buffer_mgr->WaitForFenceCounter(m_flush_fence_counter);
 
   // For readback textures, invalidate the CPU cache as there is new data there.
   if (m_type == StagingTextureType::Readback || m_type == StagingTextureType::Mutable)
