@@ -18,6 +18,7 @@
 #include "VideoBackends/Vulkan/VKVertexManager.h"
 #include "VideoBackends/Vulkan/VulkanContext.h"
 
+#include "VKScheduler.h"
 #include "VideoCommon/FramebufferManager.h"
 #include "VideoCommon/TextureCacheBase.h"
 #include "VideoCommon/VideoBackendBase.h"
@@ -196,20 +197,21 @@ bool VideoBackend::Initialize(const WindowSystemInfo& wsi)
   // With the backend information populated, we can now initialize videocommon.
   InitializeShared();
 
-  // Create command buffers. We do this separately because the other classes depend on it.
-  g_command_buffer_mgr = std::make_unique<CommandBufferManager>(g_Config.bBackendMultithreading);
-  if (!g_command_buffer_mgr->Initialize())
-  {
-    PanicAlertFmt("Failed to create Vulkan command buffers");
-    Shutdown();
-    return false;
-  }
+  g_scheduler = std::make_unique<Scheduler>();
 
   // Remaining classes are also dependent on object cache.
   g_object_cache = std::make_unique<ObjectCache>();
   if (!g_object_cache->Initialize())
   {
     PanicAlertFmt("Failed to initialize Vulkan object cache.");
+    Shutdown();
+    return false;
+  }
+
+  // Has to be initialized after the object cache
+  if (!g_scheduler->Initialize())
+  {
+    PanicAlertFmt("Failed to initialize Vulkan scheduler.");
     Shutdown();
     return false;
   }
@@ -225,13 +227,6 @@ bool VideoBackend::Initialize(const WindowSystemInfo& wsi)
       Shutdown();
       return false;
     }
-  }
-
-  if (!StateTracker::CreateInstance())
-  {
-    PanicAlertFmt("Failed to create state tracker");
-    Shutdown();
-    return false;
   }
 
   // Create main wrapper instances.
@@ -257,6 +252,9 @@ bool VideoBackend::Initialize(const WindowSystemInfo& wsi)
 
 void VideoBackend::Shutdown()
 {
+  if (g_scheduler)
+    g_scheduler->SyncWorker();
+
   if (g_vulkan_context)
     vkDeviceWaitIdle(g_vulkan_context->GetDevice());
 
@@ -269,6 +267,9 @@ void VideoBackend::Shutdown()
   if (g_renderer)
     g_renderer->Shutdown();
 
+  if (g_scheduler)
+    g_scheduler->Shutdown();
+
   g_perf_query.reset();
   g_texture_cache.reset();
   g_framebuffer_manager.reset();
@@ -276,8 +277,7 @@ void VideoBackend::Shutdown()
   g_vertex_manager.reset();
   g_renderer.reset();
   g_object_cache.reset();
-  StateTracker::DestroyInstance();
-  g_command_buffer_mgr.reset();
+  g_scheduler.reset();
   g_vulkan_context.reset();
   ShutdownShared();
   UnloadVulkanLibrary();

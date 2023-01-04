@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -102,6 +103,7 @@ private:
   std::unique_ptr<VKTexture> m_dummy_texture;
 
   // Render pass cache
+  std::mutex m_render_pass_mutex;
   using RenderPassCacheKey = std::tuple<VkFormat, VkFormat, u32, VkAttachmentLoadOp>;
   std::map<RenderPassCacheKey, VkRenderPass> m_render_pass_cache;
 

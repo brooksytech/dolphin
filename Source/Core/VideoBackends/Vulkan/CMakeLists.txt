@@ -35,6 +35,8 @@ add_library(videovulkan
   VulkanContext.h
   VulkanLoader.cpp
   VulkanLoader.h
+  VKScheduler.h
+  VKScheduler.cpp
 )
 
 target_link_libraries(videovulkan
