@@ -705,6 +705,7 @@ else()
   add_subdirectory(Externals/fmt EXCLUDE_FROM_ALL)
 endif()
 add_subdirectory(Externals/imgui)
+add_subdirectory(Externals/implot)
 add_subdirectory(Externals/glslang)
 add_subdirectory(Externals/spirv_cross)
 
@@ -978,6 +979,8 @@ if (WIN32)
 endif()
 
 include_directories(Externals/picojson)
+
+add_subdirectory(Externals/expr)
 
 add_subdirectory(Externals/rangeset)
 

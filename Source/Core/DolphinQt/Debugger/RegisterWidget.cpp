@@ -8,12 +8,15 @@
 #include <QActionGroup>
 #include <QHeaderView>
 #include <QMenu>
+#include <QMessageBox>
 #include <QTableWidget>
 #include <QVBoxLayout>
 
+#include "Common/Debug/CodeTrace.h"
 #include "Core/Core.h"
 #include "Core/HW/ProcessorInterface.h"
 #include "Core/PowerPC/PowerPC.h"
+#include "Core/System.h"
 #include "DolphinQt/Host.h"
 #include "DolphinQt/Settings.h"
 
@@ -164,6 +167,16 @@ void RegisterWidget::ShowContextMenu()
     auto* view_double_column = menu->addAction(tr("All Double"));
     view_double_column->setData(static_cast<int>(RegisterDisplay::Double));
 
+    if (type == RegisterType::gpr || type == RegisterType::fpr)
+    {
+      menu->addSeparator();
+
+      const std::string type_string =
+          fmt::format("{}{}", type == RegisterType::gpr ? "r" : "f", m_table->currentItem()->row());
+      menu->addAction(tr("Run until hit (ignoring breakpoints)"),
+                      [this, type_string]() { AutoStep(type_string); });
+    }
+
     for (auto* action : {view_hex, view_int, view_uint, view_float, view_double})
     {
       action->setCheckable(true);
@@ -267,6 +280,32 @@ void RegisterWidget::ShowContextMenu()
   menu->addAction(tr("Update"), this, [this] { emit RequestTableUpdate(); });
 
   menu->exec(QCursor::pos());
+}
+
+void RegisterWidget::AutoStep(const std::string& reg) const
+{
+  CodeTrace trace;
+  trace.SetRegTracked(reg);
+
+  QMessageBox msgbox(
+      QMessageBox::NoIcon, tr("Timed Out"),
+      tr("<font color='#ff0000'>AutoStepping timed out. Current instruction is irrelevant."),
+      QMessageBox::Cancel);
+  QPushButton* run_button = msgbox.addButton(tr("Keep Running"), QMessageBox::AcceptRole);
+
+  while (true)
+  {
+    const AutoStepResults results = trace.AutoStepping(true);
+    emit Host::GetInstance()->UpdateDisasmDialog();
+
+    if (!results.timed_out)
+      break;
+
+    // Can keep running and try again after a time out.
+    msgbox.exec();
+    if (msgbox.clickedButton() != (QAbstractButton*)run_button)
+      break;
+  }
 }
 
 void RegisterWidget::PopulateTable()
@@ -410,12 +449,20 @@ void RegisterWidget::PopulateTable()
 
   // Int Mask
   AddRegister(
-      27, 5, RegisterType::int_mask, "Int Mask", [] { return ProcessorInterface::GetMask(); },
+      27, 5, RegisterType::int_mask, "Int Mask",
+      [] {
+        auto& system = Core::System::GetInstance();
+        return system.GetProcessorInterface().GetMask();
+      },
       nullptr);
 
   // Int Cause
   AddRegister(
-      28, 5, RegisterType::int_cause, "Int Cause", [] { return ProcessorInterface::GetCause(); },
+      28, 5, RegisterType::int_cause, "Int Cause",
+      [] {
+        auto& system = Core::System::GetInstance();
+        return system.GetProcessorInterface().GetCause();
+      },
       nullptr);
 
   // DSISR
