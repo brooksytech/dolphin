@@ -565,7 +565,7 @@ EGLDisplay EGLDRM::GetEGLDisplay(EGLenum platform, void* native)
           EGLenum platform, void* native_display, const EGLAttrib* attrib_list);
       pfn_eglGetPlatformDisplay ptr_eglGetPlatformDisplay;
 
-      INFO_LOG_FMT(VIDEO, "[EGL] Found EGL client version >= 1.5, trying eglGetPlatformDisplay\n");
+      INFO_LOG_FMT(VIDEO, "EGL: Found EGL client, trying eglGetPlatformDisplay");
       ptr_eglGetPlatformDisplay =
           (pfn_eglGetPlatformDisplay)eglGetProcAddress("eglGetPlatformDisplay");
 
@@ -583,7 +583,7 @@ EGLDisplay EGLDRM::GetEGLDisplay(EGLenum platform, void* native)
     {
       PFNEGLGETPLATFORMDISPLAYEXTPROC ptr_eglGetPlatformDisplayEXT;
 
-      INFO_LOG_FMT(VIDEO, "[EGL] Found EGL_EXT_platform_base, trying eglGetPlatformDisplayEXT\n");
+      INFO_LOG_FMT(VIDEO, "EGL: Found EGL_EXT_platform_base, trying eglGetPlatformDisplayEXT");
       ptr_eglGetPlatformDisplayEXT =
           (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
 
@@ -600,7 +600,7 @@ EGLDisplay EGLDRM::GetEGLDisplay(EGLenum platform, void* native)
   /* Either the caller didn't provide a platform type, or the EGL
    * implementation doesn't support eglGetPlatformDisplay. In this case, try
    * eglGetDisplay and hope for the best. */
-  INFO_LOG_FMT(VIDEO, "[EGL] Falling back to eglGetDisplay\n");
+  INFO_LOG_FMT(VIDEO, "EGL: Falling back to eglGetDisplay");
   return eglGetDisplay((EGLNativeDisplayType)native);
 }
 
@@ -614,7 +614,7 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
 
   if (dpy == EGL_NO_DISPLAY)
   {
-    INFO_LOG_FMT(VIDEO, "[EGL]: Couldn't get EGL display.\n");
+    INFO_LOG_FMT(VIDEO, "EGL: Couldn't get EGL display.");
     return false;
   }
 
@@ -623,11 +623,11 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
   if (!eglInitialize(egl.dpy, major, minor))
     return false;
 
-  INFO_LOG_FMT(VIDEO, "[EGL]: EGL version: %d.%d\n", *major, *minor);
+  INFO_LOG_FMT(VIDEO, "EGL: EGL version");
 
   if (!eglGetConfigs(egl.dpy, nullptr, 0, count) || *count < 1)
   {
-    INFO_LOG_FMT(VIDEO, "[EGL]: No configs to choose from.\n");
+    INFO_LOG_FMT(VIDEO, "EGL: No configs to choose from.");
     return false;
   }
 
@@ -637,7 +637,7 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
 
   if (!eglChooseConfig(egl.dpy, attrib_ptr, configs, *count, &matched) || !matched)
   {
-    INFO_LOG_FMT(VIDEO, "[EGL]: No EGL configs with appropriate attributes.\n");
+    INFO_LOG_FMT(VIDEO, "EGL: No EGL configs with appropriate attributes.");
     return false;
   }
 
@@ -654,7 +654,7 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
 
   if (i == *count)
   {
-    INFO_LOG_FMT(VIDEO, "[EGL]: No EGL config found which satifies requirements.\n");
+    INFO_LOG_FMT(VIDEO, "EGL: No EGL config found which satifies requirements.");
     return false;
   }
 
@@ -691,7 +691,7 @@ bool EGLDRM::CreateEGLSurface(EGLContextData* _egl, void* native_window)
   if (!eglMakeCurrent(_egl->dpy, _egl->surf, _egl->surf, _egl->ctx))
     return false;
 
-  INFO_LOG_FMT(VIDEO, "[EGL]: Current context: %p.\n", (void*)eglGetCurrentContext());
+  INFO_LOG_FMT(VIDEO, "EGL: Current context");
 
   return true;
 }
@@ -711,7 +711,7 @@ bool EGLDRM::SetEGLVideoMode()
   if (!InitEGLContext(EGL_PLATFORM_GBM_KHR, (EGLNativeDisplayType)this->m_gbm_dev, &major, &minor,
                       &n, attrib_ptr, gbm_choose_xrgb8888_cb))
   {
-    INFO_LOG_FMT(VIDEO, "\n[EGL] Cannot init context error 0x%x", eglGetError());
+    INFO_LOG_FMT(VIDEO, "EGL: Cannot init context");
     goto error;
   }
   attr = FillDrmEglAttribs(egl_attribs);
@@ -719,13 +719,13 @@ bool EGLDRM::SetEGLVideoMode()
 
   if (!CreateEGLContext(&this->egl, (attr != egl_attribs_ptr) ? egl_attribs_ptr : nullptr))
   {
-    INFO_LOG_FMT(VIDEO, "\n[EGL] Cannot create context error 0x%x", eglGetError());
+    INFO_LOG_FMT(VIDEO, EGL: Cannot create context error");
     goto error;
   }
 
   if (!CreateEGLSurface(&this->egl, (EGLNativeWindowType)this->m_gbm_surface))
   {
-    INFO_LOG_FMT(VIDEO, "\n[EGL] Cannot create context error 0x%x", eglGetError());
+    INFO_LOG_FMT(VIDEO, "EGL: Cannot create context error");
     return false;
   }
 
@@ -777,7 +777,7 @@ bool EGLDRM::SetVideoMode(unsigned width, unsigned height, bool fullscreen)
 
   if (!this->m_drm_mode)
   {
-    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: Did not find suitable video mode for %u x %u.\n", width, height);
+    INFO_LOG_FMT(VIDEO, "KMS/EGL: Did not find suitable video mode.");
     goto error;
   }
 
@@ -791,13 +791,13 @@ bool EGLDRM::SetVideoMode(unsigned width, unsigned height, bool fullscreen)
 
   if (!this->m_gbm_surface)
   {
-    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: Couldn't create GBM surface.\n");
+    INFO_LOG_FMT(VIDEO, "KMS/EGL: Couldn't create GBM surface.");
     goto error;
   }
 
   if (!SetEGLVideoMode())
   {
-    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: Couldn't set EGL video mode.\n");
+    INFO_LOG_FMT(VIDEO, "KMS/EGL: Couldn't set EGL video mode.");
     goto error;
   }
 
@@ -812,7 +812,7 @@ bool EGLDRM::SetVideoMode(unsigned width, unsigned height, bool fullscreen)
                        this->m_drm_mode);
   if (ret < 0)
   {
-    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: drmModeSetCrtc failed\n");
+    INFO_LOG_FMT(VIDEO, "KMS/EGL: drmModeSetCrtc failed.");
     goto error;
   }
   return true;
@@ -868,10 +868,10 @@ void GLContextEGLDRM::SwapInterval(int interval)
   if (!eglGetCurrentContext())
     return;
 
-  INFO_LOG_FMT(VIDEO, "[EGL]: eglSwapInterval(%u)\n", interval);
+  INFO_LOG_FMT(VIDEO, "EGL: eglSwapInterval");
   if (!eglSwapInterval(m_egl->dpy, interval))
   {
-    INFO_LOG_FMT(VIDEO, "[EGL]: eglSwapInterval() failed 0x%x.\n", eglGetError());
+    INFO_LOG_FMT(VIDEO, "EGL: eglSwapInterval failed");
   }
 }
 
