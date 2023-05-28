@@ -175,7 +175,7 @@ struct drm_fb* EGLDRM::GetFbFromBo(struct gbm_bo* gbm_bo)
   stride = gbm_bo_get_stride(gbm_bo);
   handle = gbm_bo_get_handle(gbm_bo).u32;
 
-  INFO_LOG_FMT(VIDEO, "[KMS]: New FB: %ux%u (stride: %u).\n", width, height, stride);
+  INFO_LOG_FMT(VIDEO, "KMS: New FB Error");
 
   ret = drmModeAddFB(this->m_drm_fd, width, height, 24, 32, stride, handle, &fb->fb_id);
   if (ret < 0)
@@ -185,7 +185,7 @@ struct drm_fb* EGLDRM::GetFbFromBo(struct gbm_bo* gbm_bo)
   return fb;
 
 error:
-  INFO_LOG_FMT(VIDEO, "[KMS]: Failed to create FB: %s\n", strerror(errno));
+  INFO_LOG_FMT(VIDEO, "KMS: Failed to create FB");
   free(fb);
   return nullptr;
 }
@@ -247,26 +247,26 @@ bool EGLDRM::Initialize()
   this->m_fd = open("/dev/dri/card0", O_RDWR);
   if (this->m_fd < 0)
   {
-    INFO_LOG_FMT(VIDEO, "[KMS]: Couldn't open DRM device.\n");
+    INFO_LOG_FMT(VIDEO, "KMS: Couldn't open DRM device.);
     return false;
   }
 
   this->m_drm_resources = drmModeGetResources(this->m_fd);
   if (!this->m_drm_resources)
   {
-    INFO_LOG_FMT(VIDEO, "[KMS]: DRM couldn't get device resources.\n");
+    INFO_LOG_FMT(VIDEO, "KMS: DRM couldn't get device resources.");
     return false;
   }
 
   if (!GetConnector(this->m_fd))
   {
-    INFO_LOG_FMT(VIDEO, "[KMS]: DRM GetConnector failed\n");
+    INFO_LOG_FMT(VIDEO, "KMS: DRM GetConnector failed.");
     return false;
   }
 
   if (!GetEncoder(this->m_fd))
   {
-    INFO_LOG_FMT(VIDEO, "[KMS]: DRM GetEncoder failed\n");
+    INFO_LOG_FMT(VIDEO, "KMS: DRM GetEncoder failed.");
     return false;
   }
 
@@ -296,7 +296,7 @@ bool EGLDRM::Initialize()
 
   if (!this->m_gbm_dev)
   {
-    INFO_LOG_FMT(VIDEO, "[KMS]: Couldn't create GBM device.\n");
+    INFO_LOG_FMT(VIDEO, "KMS: Couldn't create GBM device.");
     return false;
   }
 
@@ -924,7 +924,7 @@ std::unique_ptr<GLContext> GLContextEGLDRM::CreateSharedContext()
       eglCreateContext(m_egl->dpy, m_egl->config, m_egl->ctx, egl_attribs_ptr);
   if (!new_context->m_egl->ctx)
   {
-    ERROR_LOG(VIDEO, "\nError: eglCreateContext failed 0x%x\n", eglGetError());
+    ERROR_LOG_FMT(VIDEO, "\nError: eglCreateContext failed 0x%x\n", eglGetError());
     return nullptr;
   }
   eglBindAPI(EGL_OPENGL_ES_API);
@@ -933,7 +933,7 @@ std::unique_ptr<GLContext> GLContextEGLDRM::CreateSharedContext()
   new_context->m_is_shared = true;
   if (!new_context->CreateWindowSurface())
   {
-    ERROR_LOG(VIDEO, "\nError: CreateWindowSurface failed 0x%x\n", eglGetError());
+    ERROR_LOG_FMT(VIDEO, "\nError: CreateWindowSurface failed 0x%x\n", eglGetError());
     return nullptr;
   }
   return new_context;
