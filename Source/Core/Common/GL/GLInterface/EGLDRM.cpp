@@ -247,7 +247,7 @@ bool EGLDRM::Initialize()
   this->m_fd = open("/dev/dri/card0", O_RDWR);
   if (this->m_fd < 0)
   {
-    INFO_LOG_FMT(VIDEO, "KMS: Couldn't open DRM device.);
+    INFO_LOG_FMT(VIDEO, "KMS: Couldn't open DRM device.");
     return false;
   }
 
