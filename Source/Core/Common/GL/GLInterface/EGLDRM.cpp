@@ -719,7 +719,7 @@ bool EGLDRM::SetEGLVideoMode()
 
   if (!CreateEGLContext(&this->egl, (attr != egl_attribs_ptr) ? egl_attribs_ptr : nullptr))
   {
-    INFO_LOG_FMT(VIDEO, EGL: Cannot create context error");
+    INFO_LOG_FMT(VIDEO, "EGL: Cannot create context error");
     goto error;
   }
 
