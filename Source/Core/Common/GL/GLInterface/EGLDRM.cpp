@@ -175,7 +175,7 @@ struct drm_fb* EGLDRM::GetFbFromBo(struct gbm_bo* gbm_bo)
   stride = gbm_bo_get_stride(gbm_bo);
   handle = gbm_bo_get_handle(gbm_bo).u32;
 
-  INFO_LOG(VIDEO, "[KMS]: New FB: %ux%u (stride: %u).\n", width, height, stride);
+  INFO_LOG_FMT(VIDEO, "[KMS]: New FB: %ux%u (stride: %u).\n", width, height, stride);
 
   ret = drmModeAddFB(this->m_drm_fd, width, height, 24, 32, stride, handle, &fb->fb_id);
   if (ret < 0)
@@ -185,7 +185,7 @@ struct drm_fb* EGLDRM::GetFbFromBo(struct gbm_bo* gbm_bo)
   return fb;
 
 error:
-  INFO_LOG(VIDEO, "[KMS]: Failed to create FB: %s\n", strerror(errno));
+  INFO_LOG_FMT(VIDEO, "[KMS]: Failed to create FB: %s\n", strerror(errno));
   free(fb);
   return nullptr;
 }
@@ -234,7 +234,7 @@ bool EGLDRM::QueueFlip()
     return true;
 
   /* Failed to queue page flip. */
-  INFO_LOG(VIDEO, "\nFailed to queue page flip\n");
+  INFO_LOG_FMT(VIDEO, "\nFailed to queue page flip\n");
   return false;
 }
 
@@ -247,26 +247,26 @@ bool EGLDRM::Initialize()
   this->m_fd = open("/dev/dri/card0", O_RDWR);
   if (this->m_fd < 0)
   {
-    INFO_LOG(VIDEO, "[KMS]: Couldn't open DRM device.\n");
+    INFO_LOG_FMT(VIDEO, "[KMS]: Couldn't open DRM device.\n");
     return false;
   }
 
   this->m_drm_resources = drmModeGetResources(this->m_fd);
   if (!this->m_drm_resources)
   {
-    INFO_LOG(VIDEO, "[KMS]: DRM couldn't get device resources.\n");
+    INFO_LOG_FMT(VIDEO, "[KMS]: DRM couldn't get device resources.\n");
     return false;
   }
 
   if (!GetConnector(this->m_fd))
   {
-    INFO_LOG(VIDEO, "[KMS]: DRM GetConnector failed\n");
+    INFO_LOG_FMT(VIDEO, "[KMS]: DRM GetConnector failed\n");
     return false;
   }
 
   if (!GetEncoder(this->m_fd))
   {
-    INFO_LOG(VIDEO, "[KMS]: DRM GetEncoder failed\n");
+    INFO_LOG_FMT(VIDEO, "[KMS]: DRM GetEncoder failed\n");
     return false;
   }
 
@@ -274,7 +274,7 @@ bool EGLDRM::Initialize()
   this->m_connector_id = this->m_drm_connector->connector_id;
   this->m_orig_crtc = drmModeGetCrtc(this->m_fd, this->m_crtc_id);
   if (!this->m_orig_crtc)
-    INFO_LOG(VIDEO, "[DRM]: Cannot find original CRTC.\n");
+    INFO_LOG_FMT(VIDEO, "[DRM]: Cannot find original CRTC.\n");
 
   /* Choose the optimal video mode for get_video_size():
     - the current video mode from the CRTC
@@ -296,7 +296,7 @@ bool EGLDRM::Initialize()
 
   if (!this->m_gbm_dev)
   {
-    INFO_LOG(VIDEO, "[KMS]: Couldn't create GBM device.\n");
+    INFO_LOG_FMT(VIDEO, "[KMS]: Couldn't create GBM device.\n");
     return false;
   }
 
@@ -383,7 +383,7 @@ void EGLDRM::SwapDrm(int interval, int max_swapchain_images)
    * (nonblocking mode, so just drop the frame). */
   if (WaitFlip(interval))
   {
-    INFO_LOG(VIDEO, "\nwait flip");
+    INFO_LOG_FMT(VIDEO, "\nwait flip");
     return;
   }
 
@@ -404,7 +404,7 @@ bool EGLDRM::GetConnector(int connector_fd)
 
   /* Enumerate all connectors. */
 
-  INFO_LOG(VIDEO, "[DRM]: Found %d connectors.\n", this->m_drm_resources->count_connectors);
+  INFO_LOG_FMT(VIDEO, "[DRM]: Found %d connectors.\n", this->m_drm_resources->count_connectors);
 
   for (i = 0; (int)i < this->m_drm_resources->count_connectors; i++)
   {
@@ -414,12 +414,12 @@ bool EGLDRM::GetConnector(int connector_fd)
     if (conn)
     {
       bool connected = conn->connection == DRM_MODE_CONNECTED;
-      INFO_LOG(VIDEO, "[DRM]: Connector %d connected: %s\n", i, connected ? "yes" : "no");
-      INFO_LOG(VIDEO, "[DRM]: Connector %d has %d modes.\n", i, conn->count_modes);
+      INFO_LOG_FMT(VIDEO, "[DRM]: Connector %d connected: %s\n", i, connected ? "yes" : "no");
+      INFO_LOG_FMT(VIDEO, "[DRM]: Connector %d has %d modes.\n", i, conn->count_modes);
       if (connected && conn->count_modes > 0)
       {
         monitor_index_count++;
-        INFO_LOG(VIDEO, "[DRM]: Connector %d assigned to monitor index: #%u.\n", i,
+        INFO_LOG_FMT(VIDEO, "[DRM]: Connector %d assigned to monitor index: #%u.\n", i,
                  monitor_index_count);
       }
       drmModeFreeConnector(conn);
@@ -448,7 +448,7 @@ bool EGLDRM::GetConnector(int connector_fd)
 
   if (!this->m_drm_connector)
   {
-    INFO_LOG(VIDEO, "[DRM]: Couldn't get device connector.\n");
+    INFO_LOG_FMT(VIDEO, "[DRM]: Couldn't get device connector.\n");
     return false;
   }
   return true;
@@ -474,13 +474,13 @@ bool EGLDRM::GetEncoder(int encoder_fd)
 
   if (!this->m_drm_encoder)
   {
-    INFO_LOG(VIDEO, "[DRM]: Couldn't find DRM encoder.\n");
+    INFO_LOG_FMT(VIDEO, "[DRM]: Couldn't find DRM encoder.\n");
     return false;
   }
 
   for (i = 0; (int)i < this->m_drm_connector->count_modes; i++)
   {
-    INFO_LOG(VIDEO, "[DRM]: Mode %d: (%s) %d x %d, %u Hz\n", i,
+    INFO_LOG_FMT(VIDEO, "[DRM]: Mode %d: (%s) %d x %d, %u Hz\n", i,
              this->m_drm_connector->modes[i].name, this->m_drm_connector->modes[i].hdisplay,
              this->m_drm_connector->modes[i].vdisplay, this->m_drm_connector->modes[i].vrefresh);
   }
@@ -568,7 +568,7 @@ EGLDisplay EGLDRM::GetEGLDisplay(EGLenum platform, void* native)
           EGLenum platform, void* native_display, const EGLAttrib* attrib_list);
       pfn_eglGetPlatformDisplay ptr_eglGetPlatformDisplay;
 
-      INFO_LOG(VIDEO, "[EGL] Found EGL client version >= 1.5, trying eglGetPlatformDisplay\n");
+      INFO_LOG_FMT(VIDEO, "[EGL] Found EGL client version >= 1.5, trying eglGetPlatformDisplay\n");
       ptr_eglGetPlatformDisplay =
           (pfn_eglGetPlatformDisplay)eglGetProcAddress("eglGetPlatformDisplay");
 
@@ -586,7 +586,7 @@ EGLDisplay EGLDRM::GetEGLDisplay(EGLenum platform, void* native)
     {
       PFNEGLGETPLATFORMDISPLAYEXTPROC ptr_eglGetPlatformDisplayEXT;
 
-      INFO_LOG(VIDEO, "[EGL] Found EGL_EXT_platform_base, trying eglGetPlatformDisplayEXT\n");
+      INFO_LOG_FMT(VIDEO, "[EGL] Found EGL_EXT_platform_base, trying eglGetPlatformDisplayEXT\n");
       ptr_eglGetPlatformDisplayEXT =
           (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
 
@@ -603,7 +603,7 @@ EGLDisplay EGLDRM::GetEGLDisplay(EGLenum platform, void* native)
   /* Either the caller didn't provide a platform type, or the EGL
    * implementation doesn't support eglGetPlatformDisplay. In this case, try
    * eglGetDisplay and hope for the best. */
-  INFO_LOG(VIDEO, "[EGL] Falling back to eglGetDisplay\n");
+  INFO_LOG_FMT(VIDEO, "[EGL] Falling back to eglGetDisplay\n");
   return eglGetDisplay((EGLNativeDisplayType)native);
 }
 
@@ -617,7 +617,7 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
 
   if (dpy == EGL_NO_DISPLAY)
   {
-    INFO_LOG(VIDEO, "[EGL]: Couldn't get EGL display.\n");
+    INFO_LOG_FMT(VIDEO, "[EGL]: Couldn't get EGL display.\n");
     return false;
   }
 
@@ -626,11 +626,11 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
   if (!eglInitialize(egl.dpy, major, minor))
     return false;
 
-  INFO_LOG(VIDEO, "[EGL]: EGL version: %d.%d\n", *major, *minor);
+  INFO_LOG_FMT(VIDEO, "[EGL]: EGL version: %d.%d\n", *major, *minor);
 
   if (!eglGetConfigs(egl.dpy, nullptr, 0, count) || *count < 1)
   {
-    INFO_LOG(VIDEO, "[EGL]: No configs to choose from.\n");
+    INFO_LOG_FMT(VIDEO, "[EGL]: No configs to choose from.\n");
     return false;
   }
 
@@ -640,7 +640,7 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
 
   if (!eglChooseConfig(egl.dpy, attrib_ptr, configs, *count, &matched) || !matched)
   {
-    INFO_LOG(VIDEO, "[EGL]: No EGL configs with appropriate attributes.\n");
+    INFO_LOG_FMT(VIDEO, "[EGL]: No EGL configs with appropriate attributes.\n");
     return false;
   }
 
@@ -657,7 +657,7 @@ bool EGLDRM::InitEGLContext(EGLenum platform, void* display_data, EGLint* major,
 
   if (i == *count)
   {
-    INFO_LOG(VIDEO, "[EGL]: No EGL config found which satifies requirements.\n");
+    INFO_LOG_FMT(VIDEO, "[EGL]: No EGL config found which satifies requirements.\n");
     return false;
   }
 
@@ -694,7 +694,7 @@ bool EGLDRM::CreateEGLSurface(EGLContextData* _egl, void* native_window)
   if (!eglMakeCurrent(_egl->dpy, _egl->surf, _egl->surf, _egl->ctx))
     return false;
 
-  INFO_LOG(VIDEO, "[EGL]: Current context: %p.\n", (void*)eglGetCurrentContext());
+  INFO_LOG_FMT(VIDEO, "[EGL]: Current context: %p.\n", (void*)eglGetCurrentContext());
 
   return true;
 }
@@ -714,7 +714,7 @@ bool EGLDRM::SetEGLVideoMode()
   if (!InitEGLContext(EGL_PLATFORM_GBM_KHR, (EGLNativeDisplayType)this->m_gbm_dev, &major, &minor,
                       &n, attrib_ptr, gbm_choose_xrgb8888_cb))
   {
-    INFO_LOG(VIDEO, "\n[EGL] Cannot init context error 0x%x", eglGetError());
+    INFO_LOG_FMT(VIDEO, "\n[EGL] Cannot init context error 0x%x", eglGetError());
     goto error;
   }
   attr = FillDrmEglAttribs(egl_attribs);
@@ -722,13 +722,13 @@ bool EGLDRM::SetEGLVideoMode()
 
   if (!CreateEGLContext(&this->egl, (attr != egl_attribs_ptr) ? egl_attribs_ptr : nullptr))
   {
-    INFO_LOG(VIDEO, "\n[EGL] Cannot create context error 0x%x", eglGetError());
+    INFO_LOG_FMT(VIDEO, "\n[EGL] Cannot create context error 0x%x", eglGetError());
     goto error;
   }
 
   if (!CreateEGLSurface(&this->egl, (EGLNativeWindowType)this->m_gbm_surface))
   {
-    INFO_LOG(VIDEO, "\n[EGL] Cannot create context error 0x%x", eglGetError());
+    INFO_LOG_FMT(VIDEO, "\n[EGL] Cannot create context error 0x%x", eglGetError());
     return false;
   }
 
@@ -780,7 +780,7 @@ bool EGLDRM::SetVideoMode(unsigned width, unsigned height, bool fullscreen)
 
   if (!this->m_drm_mode)
   {
-    INFO_LOG(VIDEO, "[KMS/EGL]: Did not find suitable video mode for %u x %u.\n", width, height);
+    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: Did not find suitable video mode for %u x %u.\n", width, height);
     goto error;
   }
 
@@ -794,13 +794,13 @@ bool EGLDRM::SetVideoMode(unsigned width, unsigned height, bool fullscreen)
 
   if (!this->m_gbm_surface)
   {
-    INFO_LOG(VIDEO, "[KMS/EGL]: Couldn't create GBM surface.\n");
+    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: Couldn't create GBM surface.\n");
     goto error;
   }
 
   if (!SetEGLVideoMode())
   {
-    INFO_LOG(VIDEO, "[KMS/EGL]: Couldn't set EGL video mode.\n");
+    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: Couldn't set EGL video mode.\n");
     goto error;
   }
 
@@ -815,7 +815,7 @@ bool EGLDRM::SetVideoMode(unsigned width, unsigned height, bool fullscreen)
                        this->m_drm_mode);
   if (ret < 0)
   {
-    INFO_LOG(VIDEO, "[KMS/EGL]: drmModeSetCrtc failed\n");
+    INFO_LOG_FMT(VIDEO, "[KMS/EGL]: drmModeSetCrtc failed\n");
     goto error;
   }
   return true;
@@ -857,7 +857,7 @@ void GLContextEGLDRM::SwapInterval(int interval)
 {
   m_interval = interval;
   if (interval > 1)
-    INFO_LOG(VIDEO,
+    INFO_LOG_FMT(VIDEO,
              "[KMS]: Swap intervals > 1 currently not supported. Will use swap interval of 1.\n");
 
   /* Can be called before initialization.
@@ -871,10 +871,10 @@ void GLContextEGLDRM::SwapInterval(int interval)
   if (!eglGetCurrentContext())
     return;
 
-  INFO_LOG(VIDEO, "[EGL]: eglSwapInterval(%u)\n", interval);
+  INFO_LOG_FMT(VIDEO, "[EGL]: eglSwapInterval(%u)\n", interval);
   if (!eglSwapInterval(m_egl->dpy, interval))
   {
-    INFO_LOG(VIDEO, "[EGL]: eglSwapInterval() failed 0x%x.\n", eglGetError());
+    INFO_LOG_FMT(VIDEO, "[EGL]: eglSwapInterval() failed 0x%x.\n", eglGetError());
   }
 }
 
@@ -947,7 +947,7 @@ bool GLContextEGLDRM::CreateWindowSurface()
   if (m_supports_surfaceless)
   {
     m_egl->surf = EGL_NO_SURFACE;
-    INFO_LOG(VIDEO, "\nCreated surfaceless EGL shared context\n");
+    INFO_LOG_FMT(VIDEO, "\nCreated surfaceless EGL shared context\n");
     return true;
   }
 
@@ -955,7 +955,7 @@ bool GLContextEGLDRM::CreateWindowSurface()
   {
     if (!g_drm->CreateEGLSurface(m_egl, (EGLNativeWindowType)g_drm->GetGbmSurface()))
     {
-      INFO_LOG(VIDEO, "\negl_create_surface failed (error 0x%x), trying pbuffer instead...\n",
+      INFO_LOG_FMT(VIDEO, "\negl_create_surface failed (error 0x%x), trying pbuffer instead...\n",
                eglGetError());
       goto pbuffer;
     }
@@ -964,7 +964,7 @@ bool GLContextEGLDRM::CreateWindowSurface()
     if (!eglQuerySurface(m_egl->dpy, m_egl->surf, EGL_WIDTH, &surface_width) ||
         !eglQuerySurface(m_egl->dpy, m_egl->surf, EGL_HEIGHT, &surface_height))
     {
-      INFO_LOG(VIDEO,
+      INFO_LOG_FMT(VIDEO,
                "Failed to get surface dimensions via eglQuerySurface. Size may be incorrect.");
     }
     m_backbuffer_width = static_cast<int>(surface_width);
@@ -976,7 +976,7 @@ pbuffer:
   m_egl->surf = eglCreatePbufferSurface(m_egl->dpy, m_egl->config, attrib_list);
   if (!m_egl->surf)
   {
-    INFO_LOG(VIDEO, "\nError: eglCreatePbufferSurface failed 0x%x\n", eglGetError());
+    INFO_LOG_FMT(VIDEO, "\nError: eglCreatePbufferSurface failed 0x%x\n", eglGetError());
     return false;
   }
   return true;
@@ -990,7 +990,7 @@ void GLContextEGLDRM::DestroyWindowSurface()
   if (eglGetCurrentSurface(EGL_DRAW) == m_egl->surf)
     eglMakeCurrent(m_egl->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   if (!eglDestroySurface(m_egl->dpy, m_egl->surf))
-    INFO_LOG(VIDEO, "\nCould not destroy window surface.");
+    INFO_LOG_FMT(VIDEO, "\nCould not destroy window surface.");
   m_egl->surf = EGL_NO_SURFACE;
 }
 
@@ -1021,9 +1021,9 @@ void GLContextEGLDRM::DestroyContext()
   if (eglGetCurrentContext() == m_egl->ctx)
     eglMakeCurrent(m_egl->dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   if (!eglDestroyContext(m_egl->dpy, m_egl->ctx))
-    INFO_LOG(VIDEO, "\nCould not destroy drawing context.");
+    INFO_LOG_FMT(VIDEO, "\nCould not destroy drawing context.");
   if (!m_is_shared && !eglTerminate(m_egl->dpy))
-    INFO_LOG(VIDEO, "\nCould not destroy display connection.");
+    INFO_LOG_FMT(VIDEO, "\nCould not destroy display connection.");
   m_egl->ctx = EGL_NO_CONTEXT;
   m_egl->dpy = EGL_NO_DISPLAY;
 }
