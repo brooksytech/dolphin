@@ -15,6 +15,7 @@ endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   target_sources(dolphin-nogui PRIVATE PlatformFBDev.cpp)
+	target_sources(dolphin-nogui PRIVATE PlatformDRM.cpp)
 endif()
 
 if(ENABLE_WAYLAND AND WAYLAND_FOUND)
