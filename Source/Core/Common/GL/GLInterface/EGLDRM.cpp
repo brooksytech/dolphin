@@ -274,7 +274,7 @@ bool EGLDRM::Initialize()
   this->m_connector_id = this->m_drm_connector->connector_id;
   this->m_orig_crtc = drmModeGetCrtc(this->m_fd, this->m_crtc_id);
   if (!this->m_orig_crtc)
-    INFO_LOG_FMT(VIDEO, "[DRM]: Cannot find original CRTC.\n");
+    INFO_LOG_FMT(VIDEO, "DRM: Cannot find original CRTC.");
 
   /* Choose the optimal video mode for get_video_size():
     - the current video mode from the CRTC
@@ -404,7 +404,7 @@ bool EGLDRM::GetConnector(int connector_fd)
 
   /* Enumerate all connectors. */
 
-  INFO_LOG_FMT(VIDEO, "[DRM]: Found %d connectors.\n", this->m_drm_resources->count_connectors);
+  INFO_LOG_FMT(VIDEO, "DRM: Found connector error");
 
   for (i = 0; (int)i < this->m_drm_resources->count_connectors; i++)
   {
@@ -414,13 +414,12 @@ bool EGLDRM::GetConnector(int connector_fd)
     if (conn)
     {
       bool connected = conn->connection == DRM_MODE_CONNECTED;
-      INFO_LOG_FMT(VIDEO, "[DRM]: Connector %d connected: %s\n", i, connected ? "yes" : "no");
-      INFO_LOG_FMT(VIDEO, "[DRM]: Connector %d has %d modes.\n", i, conn->count_modes);
+      INFO_LOG_FMT(VIDEO, "DRM: error");
+      INFO_LOG_FMT(VIDEO, "DRM: Connector error");
       if (connected && conn->count_modes > 0)
       {
         monitor_index_count++;
-        INFO_LOG_FMT(VIDEO, "[DRM]: Connector %d assigned to monitor index: #%u.\n", i,
-                 monitor_index_count);
+        INFO_LOG_FMT(VIDEO, "DRM: Connector error at assigned to monitor index");
       }
       drmModeFreeConnector(conn);
     }
@@ -448,7 +447,7 @@ bool EGLDRM::GetConnector(int connector_fd)
 
   if (!this->m_drm_connector)
   {
-    INFO_LOG_FMT(VIDEO, "[DRM]: Couldn't get device connector.\n");
+    INFO_LOG_FMT(VIDEO, "DRM: Couldn't get device connector.");
     return false;
   }
   return true;
@@ -474,15 +473,13 @@ bool EGLDRM::GetEncoder(int encoder_fd)
 
   if (!this->m_drm_encoder)
   {
-    INFO_LOG_FMT(VIDEO, "[DRM]: Couldn't find DRM encoder.\n");
+    INFO_LOG_FMT(VIDEO, "DRM: Couldn't find DRM encoder.");
     return false;
   }
 
   for (i = 0; (int)i < this->m_drm_connector->count_modes; i++)
   {
-    INFO_LOG_FMT(VIDEO, "[DRM]: Mode %d: (%s) %d x %d, %u Hz\n", i,
-             this->m_drm_connector->modes[i].name, this->m_drm_connector->modes[i].hdisplay,
-             this->m_drm_connector->modes[i].vdisplay, this->m_drm_connector->modes[i].vrefresh);
+    INFO_LOG_FMT(VIDEO, "DRM: Mode error");
   }
 
   return true;
