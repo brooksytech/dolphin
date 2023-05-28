@@ -41,6 +41,7 @@ public:
 
 #ifdef __linux__
   static std::unique_ptr<Platform> CreateFBDevPlatform();
+  static std::unique_ptr<Platform> CreateDRMPlatform();
 #endif
 
 #ifdef _WIN32
