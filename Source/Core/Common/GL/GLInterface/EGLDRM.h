@@ -120,7 +120,7 @@ public:
   bool MakeCurrent() override;
   bool ClearCurrent() override;
 
-  void UpdateSurface(void* window_handle) override;
+  //void UpdateSurface(void* window_handle) override;
 
   void Swap() override;
   void SwapInterval(int interval) override;
