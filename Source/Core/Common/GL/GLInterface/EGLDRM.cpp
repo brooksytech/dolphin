@@ -921,7 +921,7 @@ std::unique_ptr<GLContext> GLContextEGLDRM::CreateSharedContext()
       eglCreateContext(m_egl->dpy, m_egl->config, m_egl->ctx, egl_attribs_ptr);
   if (!new_context->m_egl->ctx)
   {
-    ERROR_LOG_FMT(VIDEO, "\nError: eglCreateContext failed 0x%x\n", eglGetError());
+    ERROR_LOG_FMT(VIDEO, "FMT: error");
     return nullptr;
   }
   eglBindAPI(EGL_OPENGL_ES_API);
@@ -930,7 +930,7 @@ std::unique_ptr<GLContext> GLContextEGLDRM::CreateSharedContext()
   new_context->m_is_shared = true;
   if (!new_context->CreateWindowSurface())
   {
-    ERROR_LOG_FMT(VIDEO, "\nError: CreateWindowSurface failed 0x%x\n", eglGetError());
+    ERROR_LOG_FMT(VIDEO, "FMT: error");
     return nullptr;
   }
   return new_context;
@@ -952,8 +952,7 @@ bool GLContextEGLDRM::CreateWindowSurface()
   {
     if (!g_drm->CreateEGLSurface(m_egl, (EGLNativeWindowType)g_drm->GetGbmSurface()))
     {
-      INFO_LOG_FMT(VIDEO, "\negl_create_surface failed (error 0x%x), trying pbuffer instead...\n",
-               eglGetError());
+      INFO_LOG_FMT(VIDEO, "Error",);
       goto pbuffer;
     }
     // Get dimensions from the surface.
