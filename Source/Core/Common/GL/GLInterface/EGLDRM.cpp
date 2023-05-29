@@ -972,7 +972,7 @@ pbuffer:
   m_egl->surf = eglCreatePbufferSurface(m_egl->dpy, m_egl->config, attrib_list);
   if (!m_egl->surf)
   {
-    INFO_LOG_FMT(VIDEO, "\nError: eglCreatePbufferSurface failed 0x%x\n", eglGetError());
+    INFO_LOG_FMT(VIDEO, "FMT: Error");
     return false;
   }
   return true;
